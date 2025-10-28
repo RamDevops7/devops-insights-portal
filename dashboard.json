@@ -1,0 +1,29 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": null,
+    "title": "DevOps Insights Portal - Starter",
+    "panels": [
+      {
+        "type": "stat",
+        "title": "Total Builds",
+        "targets": [{"expr": "increase(di_builds_total[1d])", "refId": "A"}],
+        "gridPos": {"x":0,"y":0,"w":6,"h":3}
+      },
+      {
+        "type": "timeseries",
+        "title": "Deploys (recent)",
+        "targets": [{"expr": "increase(di_deploys_total[1h])", "refId": "B"}],
+        "gridPos": {"x":6,"y":0,"w":6,"h":3}
+      },
+      {
+        "type": "gauge",
+        "title": "Current Errors",
+        "targets": [{"expr": "di_errors_current", "refId": "C"}],
+        "gridPos": {"x":0,"y":3,"w":6,"h":3}
+      }
+    ],
+    "schemaVersion": 27,
+    "version": 1
+  }
+}

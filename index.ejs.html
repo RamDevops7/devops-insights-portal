@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>DevOps Insights Portal</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .chart { max-width: 900px; margin-bottom: 30px; }
+  </style>
+</head>
+<body>
+  <h1>DevOps Insights Portal</h1>
+  <p>Simulated builds, deploys and errors. Prometheus metrics available at <code>/metrics</code></p>
+
+  <div class="chart">
+    <canvas id="buildChart"></canvas>
+  </div>
+
+  <div class="chart">
+    <canvas id="deployChart"></canvas>
+  </div>
+
+  <script>
+    async function loadData() {
+      const r = await fetch('/api/metrics-data');
+      return r.json();
+    }
+
+    function toLabels(data) { return data.map(d => new Date(d.ts).toLocaleTimeString()); }
+
+    async function draw() {
+      const data = await loadData();
+
+      const ctxB = document.getElementById('buildChart').getContext('2d');
+      const ctxD = document.getElementById('deployChart').getContext('2d');
+
+      const buildStatuses = data.builds.map(b => b.status === 'success' ? 1 : 0);
+      new Chart(ctxB, {
+        type: 'line',
+        data: {
+          labels: toLabels(data.builds),
+          datasets: [{ label: 'Build Success (1=success)', data: buildStatuses, fill: true }]
+        }
+      });
+
+      new Chart(ctxD, {
+        type: 'bar',
+        data: {
+          labels: toLabels(data.deploys),
+          datasets: [{ label: 'Deployments', data: data.deploys.map((_,i)=>1) }]
+        }
+      });
+    }
+
+    draw();
+    setInterval(draw, 8000);
+  </script>
+</body>
+</html>
