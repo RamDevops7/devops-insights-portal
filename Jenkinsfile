@@ -1,68 +1,43 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    DOCKER_IMAGE = "rampdocker77/devops-insights-portal"
-    DOCKER_TAG = "${env.BUILD_NUMBER}"
-  }
-
-  stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
-    }
-
-    stage('Install & Test') {
-      steps {
-        bat 'npm install'
-      }
-    }
-
-    stage('Build Docker Image') {
-      steps {
-        bat "docker build -t %DOCKER_IMAGE%:%DOCKER_TAG% ."
-      }
-    }
-
-    stage('Push to Docker Hub') {
-      steps {
-        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PW', usernameVariable: 'DOCKER_USER')]) {
-          bat '''
-          echo %DOCKER_PW% | docker login -u %DOCKER_USER% --password-stdin
-          docker push %DOCKER_IMAGE%:%DOCKER_TAG%
-          '''
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building the project...'
+                // your build commands here
+            }
         }
-      }
-    }
 
-    stage('Deploy to EC2') {
-      steps {
-        sshPublisher(publishers: [
-          sshPublisherDesc(
-            configName: 'EC2-Docker',  // the SSH name you created in "Publish over SSH"
-            transfers: [
-              sshTransfer(
-                execCommand: '''
-                  sudo docker stop devops-container || true
-                  sudo docker rm devops-container || true
-                  sudo docker pull rampdocker77/devops-insights-portal:${BUILD_NUMBER}
-                  sudo docker run -d --name devops-container -p 8080:8080 rampdocker77/devops-insights-portal:${BUILD_NUMBER}
-                '''
-              )
-            ]
-          )
-        ])
-      }
-    }
-  }
+        stage('Docker Build & Push') {
+            steps {
+                echo 'Building and pushing Docker image...'
+                // your docker build and push steps
+            }
+        }
 
-  post {
-    success {
-      echo "✅ Pipeline succeeded — deployed to EC2!"
+        stage('Deploy to EC2') {
+            steps {
+                sshPublisher(publishers: [
+                    sshPublisherDesc(
+                        configName: 'MyEC2Server',   // 🔹 must match the name in "Publish over SSH"
+                        transfers: [
+                            sshTransfer(
+                                execCommand: '''
+                                    echo "Deploying container on EC2..."
+                                    sudo docker stop devops-container || true
+                                    sudo docker rm devops-container || true
+                                    sudo docker pull rampdocker77/devops-insights-portal:8
+                                    sudo docker run -d -p 8080:3000 --name devops-container rampdocker77/devops-insights-portal:8
+                                    echo "Deployment completed successfully!"
+                                '''
+                            )
+                        ],
+                        usePromotionTimestamp: false,
+                        verbose: true
+                    )
+                ])
+            }
+        }
     }
-    failure {
-      echo "❌ Pipeline failed."
-    }
-  }
 }
