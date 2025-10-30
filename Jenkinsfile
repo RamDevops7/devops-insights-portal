@@ -1,9 +1,11 @@
 pipeline {
   agent any
+
   environment {
     DOCKER_IMAGE = "rampdocker77/devops-insights-portal"
     DOCKER_TAG = "${env.BUILD_NUMBER}"
   }
+
   stages {
     stage('Checkout') {
       steps {
@@ -36,17 +38,31 @@ pipeline {
 
     stage('Deploy to EC2') {
       steps {
-        echo "Deployment will be done from Linux EC2 (skip in Windows build)"
+        sshPublisher(publishers: [
+          sshPublisherDesc(
+            configName: 'EC2-Docker',  // the SSH name you created in "Publish over SSH"
+            transfers: [
+              sshTransfer(
+                execCommand: '''
+                  sudo docker stop devops-container || true
+                  sudo docker rm devops-container || true
+                  sudo docker pull rampdocker77/devops-insights-portal:${BUILD_NUMBER}
+                  sudo docker run -d --name devops-container -p 8080:8080 rampdocker77/devops-insights-portal:${BUILD_NUMBER}
+                '''
+              )
+            ]
+          )
+        ])
       }
     }
   }
+
   post {
     success {
-      echo "Pipeline succeeded"
+      echo "✅ Pipeline succeeded — deployed to EC2!"
     }
     failure {
-      echo "Pipeline failed"
+      echo "❌ Pipeline failed."
     }
   }
 }
-
