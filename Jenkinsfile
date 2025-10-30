@@ -1,7 +1,7 @@
 pipeline {
   agent any
   environment {
-    DOCKER_IMAGE = "yourdockerhubusername/devops-insights-portal"
+    DOCKER_IMAGE = "rampdocker77/devops-insights-portal"
     DOCKER_TAG = "${env.BUILD_NUMBER}"
   }
   stages {
