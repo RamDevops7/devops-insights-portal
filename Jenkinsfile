@@ -20,7 +20,7 @@ pipeline {
             steps {
                 sshPublisher(publishers: [
                     sshPublisherDesc(
-                        configName: 'MyEC2Server',   // 🔹 must match the name in "Publish over SSH"
+                        configName: 'EC2-Docker',   // 🔹 must match the name in "Publish over SSH"
                         transfers: [
                             sshTransfer(
                                 execCommand: '''
